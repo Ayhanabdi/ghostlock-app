@@ -1,4 +1,4 @@
-name: Extract Xiaomi Boot & XBL Config
+name: Extract Xiaomi Boot & XBL Config & Vendor Boot
 
 on:
   workflow_dispatch:
@@ -25,9 +25,9 @@ jobs:
 
       - name: Extract Partitions from OTA URL
         run: |
-          echo "Extracting boot and xbl_config..."
-          # حالا ابزار در PATH قرار دارد و بدون مسیر کامل قابل اجراست
-          payload_dumper "${{ github.event.inputs.ota_url }}" -i boot,xbl_config -o ./output/
+          echo "Extracting boot, xbl_config, and vendor_boot..."
+          # حالا هر سه پارتیشن را درخواست می‌کنیم
+          payload_dumper "${{ github.event.inputs.ota_url }}" -i boot,xbl_config,vendor_boot -o ./output/
           
           echo "Extraction complete. Files in output directory:"
           ls -lh ./output/
