@@ -1,7 +1,6 @@
-name: Extract Xiaomi Boot Image
+name: Extract Xiaomi Boot & XBL Config
 
 on:
-  # اجازه می‌دهد تا این اکشن را به صورت دستی از تب Actions اجرا کنید
   workflow_dispatch:
     inputs:
       ota_url:
@@ -16,26 +15,21 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Download Payload Dumper Go Binary
+      - name: Install payload-dumper-rust
         run: |
-          echo "Downloading payload-dumper-go using GitHub CLI..."
-          # استفاده از gh برای دانلود فایل از بخش Releases پروژه
-          gh release download --repo xishang0128/payload-dumper-go --pattern "payload-dumper-linux-amd64" --output payload-dumper-go
-          chmod +x payload-dumper-go
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Installing payload-dumper-rust..."
+          # نصب سریع از طریق اسکریپت رسمی (مخصوص لینوکس)
+          bash <(curl -sSL "https://raw.githubusercontent.com/rhythmcache/payload-dumper-rust/main/scripts/install.sh")
+          
+          # بررسی نصب و نمایش نسخه
+          payload_dumper --version
 
-      - name: Download OTA File
+      - name: Extract Partitions from OTA URL
         run: |
-          echo "Downloading OTA from: ${{ github.event.inputs.ota_url }}"
-          # دانلود فایل OTA با نمایش پیشرفت
-          wget -c -q --show-progress "${{ github.event.inputs.ota_url }}" -O ota.zip
-
-      - name: Extract Payload and Boot
-        run: |
-          echo "Extracting payload..."
-          # اجرای ابزار با دستور صحیح
-          ./payload-dumper-go extract ota.zip -p boot,xbl_config -o ./output/
+          echo "Extracting boot and xbl_config from: ${{ github.event.inputs.ota_url }}"
+          # استفاده از ابزار برای استخراج مستقیم از URL
+          # -i برای انتخاب پارتیشن‌ها و -o برای پوشه خروجی
+          payload_dumper "${{ github.event.inputs.ota_url }}" -i boot,xbl_config -o ./output/
           
           echo "Extraction complete. Files in output directory:"
           ls -lh ./output/
