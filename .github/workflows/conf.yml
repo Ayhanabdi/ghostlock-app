@@ -1,7 +1,6 @@
 name: Extract Xiaomi Boot Image
 
 on:
-  # اجازه می‌دهد تا این اکشن را به صورت دستی از تب Actions اجرا کنید
   workflow_dispatch:
     inputs:
       ota_url:
@@ -16,29 +15,26 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+      # مرحله نصب پایتون حذف شد
 
-      - name: Install Payload Dumper
+      - name: Download Payload Dumper Go Binary
         run: |
-          python -m pip install --upgrade pip
-          # نصب کتابخانه پایتون برای استخراج فایل‌های OTA
-          pip install payload-dumper-go
+          # دانلود آخرین نسخه لینوکس از صفحه Releases پروژه
+          # طبق مستندات، فایل‌ها با فرمت payload-dumper-<os>-<arch>-<tag> نام‌گذاری می‌شوند
+          wget -q https://github.com/xishang0128/payload-dumper-go/releases/latest/download/payload-dumper-linux-amd64 -O payload-dumper-go
+          chmod +x payload-dumper-go
 
       - name: Download OTA File
         run: |
           echo "Downloading OTA from: ${{ github.event.inputs.ota_url }}"
-          # دانلود فایل OTA (با قابلیت ادامه دانلود در صورت قطع شدن)
           wget -c -q --show-progress "${{ github.event.inputs.ota_url }}" -O ota.zip
 
       - name: Extract Payload and Boot
         run: |
           echo "Extracting payload..."
-          # استخراج فایل‌های مورد نیاز (boot و xbl_config)
-          # ابزار payload-dumper-go فقط فایل‌های مورد نیاز را استخراج می‌کند
-          payload-dumper -p boot,xbl_config ota.zip -o ./output/
+          # استفاده از دستور صحیح برای ابزار Go
+          # -p برای انتخاب پارتیشن‌ها و -o برای پوشه خروجی
+          ./payload-dumper-go extract ota.zip -p boot,xbl_config -o ./output/
           
           echo "Extraction complete. Files in output directory:"
           ls -lh ./output/
